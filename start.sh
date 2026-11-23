@@ -55,6 +55,20 @@ until nc -z -w 3 "$dbhost" "$dbport" 2>/dev/null; do
   sleep 3
 done
 
+# --- Video-thumbnail temp folder (upstream 0.10.1 bug) ----------------------
+# ffmpeg thumbnails write their temp file into <storage>/.thumbnails, but a
+# fresh install has no such folder and the startup job thumb_derived_import
+# deletes it whenever it is empty, so every video thumbnail fails with
+# "temp file: No such file or directory". Remove it while empty before boot
+# (keeps the legacy-sidecar fallback off) and recreate it once OxiCloud runs.
+thumbs="$OXICLOUD_STORAGE_PATH/.thumbnails"
+rmdir "$thumbs" 2>/dev/null || true
+ensure_thumbs() {
+  [ -d "$thumbs" ] && return 0
+  mkdir -p "$thumbs" 2>/dev/null && chown "$(id -u oxicloud):$(id -g oxicloud)" "$thumbs" 2>/dev/null
+  return 0
+}
+
 # --- Start OxiCloud ---------------------------------------------------------
 stopping=0
 child=0
@@ -114,7 +128,9 @@ if ! bootstrap_admin; then
 fi
 
 # --- Supervise: poll (BusyBox wait returns early on signals) ---------------
+sleep 5
 while kill -0 "$child" 2>/dev/null; do
+  ensure_thumbs
   sleep 2
 done
 wait "$child"
