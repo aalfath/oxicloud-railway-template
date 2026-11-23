@@ -10,7 +10,7 @@ One-click [Railway](https://railway.com) template for [OxiCloud](https://github.
 
 | Service | Source | What it does |
 |---|---|---|
-| **OxiCloud** | this repo (`Dockerfile` + `start.sh`) | Web app and WebDAV/CalDAV/CardDAV server on port 8086, public domain, health check `/ready`, volume at `/app/storage` |
+| **OxiCloud** | this repo (`Dockerfile`, `start.sh`, `ffmpeg-lowmem.sh`) | Web app and WebDAV/CalDAV/CardDAV server on port 8086, public domain, health check `/ready`, volume at `/app/storage` |
 | **Postgres** | Railway PostgreSQL | Metadata, users, calendars and contacts, on its own volume |
 
 The wrapper (`start.sh`) only:
@@ -18,7 +18,7 @@ The wrapper (`start.sh`) only:
 - sets Railway defaults: listens on `0.0.0.0:$PORT`, public URL from `RAILWAY_PUBLIC_DOMAIN`, public sign-up off, small thread and database pools that fit a 0.5 GB service;
 - waits for PostgreSQL, then runs the upstream entrypoint (fixes volume ownership, drops to the `oxicloud` user, runs migrations);
 - creates the admin account on the very first boot from the variables below, so nobody can claim a fresh instance through the setup page;
-- works around an OxiCloud 0.10.1 bug where video thumbnails fail on new installs (missing `.thumbnails` temp folder);
+- works around an OxiCloud 0.10.1 bug where video thumbnails fail on new installs (missing `.thumbnails` temp folder), and keeps ffmpeg's memory small (`ffmpeg-lowmem.sh`);
 - exits non-zero if OxiCloud stops unexpectedly, so Railway's restart policy brings it back.
 
 ## Variables (OxiCloud service)
@@ -43,7 +43,7 @@ No prompts at deploy time. Any other [OxiCloud setting](https://github.com/Atala
 
 ## Resources
 
-Tested with a 0.5 GB / 1 vCPU limit (Railway Free plan): idle about 60–100 MB, peak under 150 MB while thumbnailing a 24-megapixel photo and a 1080p video. Raise `OXICLOUD_WORKER_THREADS` (default 2 here) on bigger plans.
+Tested with a 0.5 GB / 1 vCPU limit (Railway Free plan): the app uses about 60–120 MB of RAM, with no out-of-memory kills while uploading and thumbnailing a 24-megapixel photo and 1080p and 4K videos. OxiCloud's own ffmpeg call buffers 100 full-size frames on one thread per visible CPU (577 MB for a 1080p video, 2 GB for 4K in our test), so the image routes it through `ffmpeg-lowmem.sh` (2 threads, scale before picking the frame: about 180–230 MB). Raise `OXICLOUD_WORKER_THREADS` (default 2 here) on bigger plans.
 
 ## Updates
 

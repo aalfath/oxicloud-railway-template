@@ -38,7 +38,7 @@ After deploy:
 
 Sync clients: WebDAV is at `https://YOUR-DOMAIN/webdav/`, CalDAV at `https://YOUR-DOMAIN/caldav/` and CardDAV at `https://YOUR-DOMAIN/carddav/`. Create an app password in your profile for each client.
 
-Sizing: the app idles at about 60–100 MB of RAM and stayed under 150 MB while thumbnailing a 24-megapixel photo with a 0.5 GB limit, so it fits the Free plan. Thread and connection pools are sized for a small service; raise `OXICLOUD_WORKER_THREADS` on larger plans. Optional settings (SMTP, OpenID Connect, S3 storage, Collabora/OnlyOffice) are standard OxiCloud environment variables you can add later.
+Sizing: tested with a 0.5 GB / 1 vCPU limit (Railway Free plan). The app uses about 60–120 MB of RAM and had no out-of-memory kills while uploading and thumbnailing a 24-megapixel photo and 1080p and 4K videos (video thumbnails go through a low-memory ffmpeg wrapper). Thread and connection pools are sized for a small service; raise `OXICLOUD_WORKER_THREADS` on larger plans. Optional settings (SMTP, OpenID Connect, S3 storage, Collabora/OnlyOffice) are standard OxiCloud environment variables you can add later.
 
 Updates: the OxiCloud service builds from a GitHub repo, so Railway shows "update available" when the template moves to a new OxiCloud release. Read the repo's CHANGELOG.md before applying it.
 
