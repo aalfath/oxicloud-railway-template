@@ -4,6 +4,9 @@ FROM diocrafts/oxicloud:0.10.1@sha256:e51843bdb8967ca825bc9b14dd3a35519591b52d4f
 
 # Railway wrapper: Railway defaults, first-boot admin, non-zero exit on crash.
 COPY --chmod=755 start.sh /usr/local/bin/railway-start.sh
+# Low-memory ffmpeg front for video thumbnails (ffprobe is looked up next to it).
+COPY --chmod=755 ffmpeg-lowmem.sh /opt/railway/bin/ffmpeg
+RUN ln -s /usr/bin/ffprobe /opt/railway/bin/ffprobe
 
 # Data lives in /app/storage: attach a Railway volume there (no VOLUME line,
 # Railway rejects it at build time).
